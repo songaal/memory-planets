@@ -1,0 +1,626 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>행성 기억력 훈련 게임</title>
+    <style>
+        :root {
+            --bg-color: #0b0f19;
+            --panel-color: #16223f;
+            --border-color: #2563eb;
+            --text-color: #ffffff;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            margin: 0;
+            padding: 10px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            box-sizing: border-box;
+            user-select: none;
+            overflow: hidden;
+        }
+
+        .container-panel {
+            background-color: var(--panel-color);
+            border: 3px solid var(--border-color);
+            border-radius: 15px;
+            padding: 20px;
+            width: 100%;
+            max-width: 440px;
+            box-shadow: 0 0 20px rgba(37, 99, 235, 0.3);
+            box-sizing: border-box;
+            text-align: center;
+        }
+
+        .setup-title {
+            color: #60a5fa;
+            margin-top: 0;
+            margin-bottom: 25px;
+            font-size: 26px;
+            text-shadow: 0 0 10px rgba(96, 165, 250, 0.5);
+        }
+
+        .hidden { display: none !important; }
+
+        .input-group {
+            margin-bottom: 20px;
+            text-align: left;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: bold;
+            color: #93c5fd;
+            font-size: 15px;
+        }
+
+        select {
+            width: 100%;
+            padding: 12px;
+            background-color: #0f172a;
+            color: white;
+            border: 1px solid var(--border-color);
+            border-radius: 5px;
+            font-size: 16px;
+        }
+
+        button {
+            width: 100%;
+            padding: 12px;
+            background: linear-gradient(135deg, #2563eb, #1d4ed8);
+            color: white;
+            border: none;
+            border-radius: 5px;
+            font-size: 18px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.2s;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.2);
+        }
+
+        button:hover {
+            background: linear-gradient(135deg, #3b82f6, #2563eb);
+            transform: translateY(-2px);
+        }
+
+        .status-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 15px;
+            font-weight: bold;
+            margin-bottom: 15px;
+            border-bottom: 1px solid #334155;
+            padding-bottom: 10px;
+        }
+
+        .quit-btn {
+            background: linear-gradient(135deg, #ef4444, #b91c1c);
+            padding: 6px 12px;
+            font-size: 12px;
+            width: auto;
+            border-radius: 4px;
+            box-shadow: none;
+        }
+        .quit-btn:hover {
+            background: linear-gradient(135deg, #f87171, #ef4444);
+            transform: translateY(-1px);
+        }
+
+        /* 행성 오브젝트 스타일 */
+        .planet {
+            width: 65px;
+            height: 65px;
+            border-radius: 50%;
+            display: inline-block;
+            position: relative;
+            box-shadow: inset -8px -8px 16px rgba(0,0,0,0.8), 0 0 8px rgba(255,255,255,0.2);
+            transition: transform 0.1s ease;
+        }
+
+        /* 행성 스킨 스타일링 */
+        .p1 { background: radial-gradient(circle at 30% 30%, #4ade80, #166534); } 
+        .p2 { background: radial-gradient(circle at 30% 30%, #ef4444, #991b1b); } 
+        .p3 { background: radial-gradient(circle at 30% 30%, #f97316, #7c2d12); }
+        .p3::after {
+            content: ''; position: absolute; top: 50%; left: -5px; width: 75px; height: 8px;
+            border: 3px solid rgba(254, 215, 170, 0.7); border-radius: 50%; transform: rotate(-15deg) translateY(-50%);
+        }
+        .p4 { background: radial-gradient(circle at 30% 30%, #a78bfa, #4c1d95); } 
+        .p5 { background: repeating-linear-gradient(45deg, #fbbf24, #d97706 8px, #b45309 16px); } 
+        .p6 { background: radial-gradient(circle at 30% 30%, #fde047, #ca8a04); } 
+        .p7 { 
+            background: radial-gradient(circle at 30% 30%, rgba(236,72,153,0.4), rgba(157,23,77,0.9)),
+                        repeating-linear-gradient(0deg, transparent, transparent 6px, rgba(255, 255, 255, 0.15) 6px, rgba(255, 255, 255, 0.15) 10px); 
+        } 
+        .p8 { background: radial-gradient(circle at 30% 30%, #22d3ee, #0369a1); } 
+        .p9 { background: radial-gradient(circle at 30% 30%, #e2e8f0, #475569); } 
+
+        /* 문제 제시 상단 구역 */
+        #display-area {
+            height: 110px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin: 15px 0;
+            background-color: #0f172a;
+            border-radius: 10px;
+            border: 1px dashed #3b82f6;
+        }
+        #display-area .planet { width: 85px; height: 85px; }
+
+        /* 3x3 격자 정렬 시스템 */
+        .matrix-container { display: flex; justify-content: center; margin-bottom: 15px; }
+        .matrix {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 10px;
+            background-color: #0f172a;
+            padding: 12px;
+            border-radius: 12px;
+            border: 2px solid var(--border-color);
+        }
+
+        /* 개별 격자 칸 설정 */
+        .matrix-item {
+            border: 1px solid #3b82f6;
+            border-radius: 10px;
+            padding: 4px;
+            cursor: pointer;
+            background-color: rgba(255,255,255,0.02);
+            transition: background 0.2s;
+            display: flex; justify-content: center; align-items: center;
+            position: relative;
+            width: 73px;
+            height: 73px;
+            box-sizing: border-box;
+        }
+        .matrix-item:hover { background-color: rgba(59, 130, 246, 0.2); }
+
+        /* [핵심 수정] 격자 내부 행성만 개별 은폐하는 암막 마스크 */
+        .matrix-item .planet-blind-mask {
+            position: absolute;
+            top: 4px;
+            left: 4px;
+            right: 4px;
+            bottom: 4px;
+            background-color: #0f172a; /* 격자 배경색과 동일한 완벽 암막 */
+            border-radius: 50%;
+            z-index: 10;
+            display: none; /* 정답 턴일 땐 기본적으로 안 보임 */
+        }
+
+        /* 문제 출제 턴일 때 격자 아이템 동작 제어 */
+        .matrix-item.disabled {
+            pointer-events: none; /* 클릭/터치 차단 */
+        }
+        .matrix-item.disabled .planet-blind-mask {
+            display: block; /* 완벽 은폐 레이어 가동 */
+        }
+
+        /* 내 선택 하단 슬롯 파트 */
+        .slots-container { margin-top: 10px; text-align: left; }
+        .slots {
+            display: flex;
+            flex-wrap: wrap; 
+            gap: 8px;
+            min-height: 60px;
+            background-color: #0f172a;
+            padding: 8px;
+            border-radius: 8px;
+            border: 1px solid #334155;
+            justify-content: center;
+        }
+
+        .slot-box {
+            width: 50px;
+            height: 50px;
+            border: 2px dashed #475569;
+            border-radius: 8px;
+            display: flex; justify-content: center; align-items: center;
+            box-sizing: border-box;
+            background-color: rgba(0,0,0,0.2);
+        }
+
+        .slot-item { position: relative; width: 100%; height: 100%; display: flex; justify-content: center; align-items: center; }
+        .slot-item .planet { width: 40px; height: 40px; box-shadow: inset -4px -4px 8px rgba(0,0,0,0.8); }
+
+        .wrong-mark::before, .wrong-mark::after {
+            content: ''; position: absolute; top: 50%; left: 50%; width: 80%; height: 4px;
+            background-color: #ef4444; border-radius: 2px; z-index: 10; box-shadow: 0 0 6px rgba(239, 68, 68, 0.8);
+        }
+        .wrong-mark::before { transform: translate(-50%, -50%) rotate(45deg); }
+        .wrong-mark::after { transform: translate(-50%, -50%) rotate(-45deg); }
+
+        #message-prompt { font-size: 16px; font-weight: bold; color: #34d399; margin: 10px 0; height: 22px; }
+
+        /* 모달 오버레이 */
+        #game-over-overlay {
+            position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
+            background-color: rgba(11, 15, 25, 0.95);
+            display: flex; flex-direction: column; justify-content: center; align-items: center; z-index: 9999;
+        }
+
+        .game-over-title { font-size: 30px; color: #f87171; font-weight: bold; margin-bottom: 10px; }
+        .game-over-score { font-size: 22px; margin-bottom: 30px; }
+        
+        .button-group-row {
+            display: flex; gap: 15px; width: 85%; max-width: 320px;
+        }
+        
+        .action-btn { border-radius: 25px; font-size: 16px; padding: 12px 0; text-align: center; }
+        .retry-action { background: linear-gradient(135deg, #2563eb, #1d4ed8); }
+        .retry-action:hover { background: linear-gradient(135deg, #3b82f6, #2563eb); }
+        .home-action { background: linear-gradient(135deg, #475569, #334155); }
+        .home-action:hover { background: linear-gradient(135deg, #64748b, #475569); }
+    </style>
+</head>
+<body>
+
+    <div id="setup-screen" class="container-panel">
+        <h1 class="setup-title">행성 기억력 훈련</h1>
+        <div class="input-group">
+            <label for="count-select">연속 출현 행성 수 (개)</label>
+            <select id="count-select">
+                <option value="2">2개</option>
+                <option value="3" selected>3개</option>
+                <option value="4">4개</option>
+                <option value="5">5개</option>
+                <option value="6">6개</option>
+                <option value="7">7개</option>
+                <option value="8">8개</option>
+                <option value="9">9개</option>
+            </select>
+        </div>
+        <div class="input-group">
+            <label for="time-select">총 훈련 시간 (분)</label>
+            <select id="time-select">
+                <option value="1" selected>1분</option>
+                <option value="2">2분</option>
+                <option value="3">3분</option>
+                <option value="4">4분</option>
+                <option value="5">5분</option>
+                <option value="6">6분</option>
+            </select>
+        </div>
+        <button id="start-btn" onclick="startGame()">훈련 시작</button>
+    </div>
+
+    <div id="game-screen" class="container-panel hidden">
+        <div class="status-bar">
+            <div>남은 시간: <span id="timer">00:00</span></div>
+            <div>점수: <span id="score">0</span></div>
+            <button class="quit-btn" onclick="endGame()">그만하기</button>
+        </div>
+
+        <div id="message-prompt">준비하세요...</div>
+        <div id="display-area"></div>
+
+        <div class="matrix-container">
+            <div id="matrix-grid" class="matrix"></div>
+        </div>
+
+        <div class="slots-container">
+            <label>내가 선택한 순서</label>
+            <div id="slots" class="slots"></div>
+        </div>
+    </div>
+
+    <div id="game-over-overlay" class="hidden">
+        <div class="game-over-title">훈련 종료</div>
+        <div class="game-over-score">최종 점수: <span id="final-score">0</span>점</div>
+        <div class="button-group-row">
+            <button class="action-btn retry-action" onclick="restartSameGame()">다시 하기</button>
+            <button class="action-btn home-action" onclick="resetToSetup()">처음으로</button>
+        </div>
+    </div>
+
+    <script>
+        let planetCount = 3;  
+        let totalTime = 60;   
+        let gameTimer = null;
+        let displayInterval = null; 
+        let score = 0;
+        
+        let targetSequence = []; 
+        let userSequence = [];   
+        let isDisplaying = false;
+        let isAnswering = false; 
+
+        let audioCtx = null;
+
+        function initAudio() {
+            if (!audioCtx) {
+                audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            }
+            if (audioCtx && audioCtx.state === 'suspended') {
+                audioCtx.resume();
+            }
+        }
+
+        function playTone(type) {
+            try {
+                initAudio();
+                if(!audioCtx || audioCtx.state === 'suspended') return;
+
+                const osc = audioCtx.createOscillator();
+                const gain = audioCtx.createGain();
+                osc.connect(gain);
+                gain.connect(audioCtx.destination);
+                const now = audioCtx.currentTime;
+
+                if (type === 'ready_go') {
+                    osc.type = 'sine';
+                    osc.frequency.setValueAtTime(392.00, now); 
+                    osc.frequency.setValueAtTime(523.25, now + 0.15); 
+                    gain.gain.setValueAtTime(0.18, now);
+                    gain.gain.exponentialRampToValueAtTime(0.005, now + 0.35);
+                    osc.start(now);
+                    osc.stop(now + 0.35);
+                } else if (type === 'tick') {
+                    osc.type = 'triangle';
+                    osc.frequency.setValueAtTime(800, now);
+                    gain.gain.setValueAtTime(0.04, now); 
+                    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.04);
+                    osc.start(now);
+                    osc.stop(now + 0.05);
+                } else if (type === 'game_over') {
+                    osc.type = 'sine';
+                    osc.frequency.setValueAtTime(587.33, now); 
+                    osc.frequency.setValueAtTime(440.00, now + 0.12); 
+                    osc.frequency.setValueAtTime(293.66, now + 0.24); 
+                    gain.gain.setValueAtTime(0.2, now);
+                    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.5);
+                    osc.start(now);
+                    osc.stop(now + 0.5);
+                } else if (type === 'appear') {
+                    osc.type = 'sine';
+                    osc.frequency.setValueAtTime(330, now); 
+                    gain.gain.setValueAtTime(0.06, now); 
+                    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.08);
+                    osc.start(now);
+                    osc.stop(now + 0.08);
+                } else if (type === 'click') {
+                    osc.type = 'sine';
+                    osc.frequency.setValueAtTime(400, now);
+                    osc.frequency.exponentialRampToValueAtTime(800, now + 0.1);
+                    gain.gain.setValueAtTime(0.25, now);
+                    gain.gain.exponentialRampToValueAtTime(0.01, now + 0.12);
+                    osc.start(now);
+                    osc.stop(now + 0.12);
+                } else if (type === 'wrong') {
+                    osc.type = 'triangle';
+                    osc.frequency.setValueAtTime(220, now);
+                    osc.frequency.setValueAtTime(140, now + 0.06);
+                    gain.gain.setValueAtTime(0.35, now);
+                    gain.gain.exponentialRampToValueAtTime(0.01, now + 0.22);
+                    osc.start(now);
+                    osc.stop(now + 0.22);
+                } else if (type === 'round_clear') {
+                    osc.type = 'sine';
+                    osc.frequency.setValueAtTime(523.25, now); 
+                    osc.frequency.setValueAtTime(659.25, now + 0.08); 
+                    osc.frequency.setValueAtTime(783.99, now + 0.16); 
+                    gain.gain.setValueAtTime(0.15, now);
+                    gain.gain.exponentialRampToValueAtTime(0.01, now + 0.3);
+                    osc.start(now);
+                    osc.stop(now + 0.3);
+                }
+            } catch(e) {
+                console.log("Audio play blocked:", e);
+            }
+        }
+
+        function startGame() {
+            initAudio(); 
+            planetCount = parseInt(document.getElementById('count-select').value);
+            totalTime = parseInt(document.getElementById('time-select').value) * 60;
+            executeCoreGameSetup();
+        }
+
+        function restartSameGame() {
+            planetCount = parseInt(document.getElementById('count-select').value);
+            totalTime = parseInt(document.getElementById('time-select').value) * 60;
+            executeCoreGameSetup();
+        }
+
+        function executeCoreGameSetup() {
+            score = 0;
+            document.getElementById('score').innerText = score;
+            
+            document.getElementById('setup-screen').classList.add('hidden');
+            document.getElementById('game-screen').classList.remove('hidden');
+            document.getElementById('game-over-overlay').classList.add('hidden'); 
+
+            playTone('ready_go'); 
+            startCountdown();
+            nextRound();
+        }
+
+        function startCountdown() {
+            clearInterval(gameTimer);
+            updateTimerDisplay();
+            gameTimer = setInterval(() => {
+                totalTime--;
+                updateTimerDisplay();
+                
+                if (totalTime <= 5 && totalTime > 0) {
+                    playTone('tick');
+                }
+
+                if (totalTime <= 0) {
+                    endGame();
+                }
+            }, 1000);
+        }
+
+        function updateTimerDisplay() {
+            const min = String(Math.floor(totalTime / 60)).padStart(2, '0');
+            const sec = String(totalTime % 60).padStart(2, '0');
+            document.getElementById('timer').innerText = `${min}:${sec}`;
+        }
+
+        function initSlotBoxes() {
+            const slotsDiv = document.getElementById('slots');
+            slotsDiv.innerHTML = '';
+            for (let i = 0; i < planetCount; i++) {
+                const box = document.createElement('div');
+                box.className = 'slot-box';
+                box.id = `slot-box-${i}`;
+                slotsDiv.appendChild(box);
+            }
+        }
+
+        function renderShuffledMatrix() {
+            const grid = document.getElementById('matrix-grid');
+            grid.innerHTML = '';
+            let items = [1, 2, 3, 4, 5, 6, 7, 8, 9];
+            for (let i = items.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [items[i], items[j]] = [items[j], items[i]];
+            }
+            items.forEach(id => {
+                const itemDiv = document.createElement('div');
+                itemDiv.id = `matrix-item-${id}`;
+                itemDiv.className = 'matrix-item';
+                itemDiv.onclick = () => selectPlanet(id);
+                // 개별 격자 내부에 암막 노출을 결정하는 .planet-blind-mask 요소를 동적 배치
+                itemDiv.innerHTML = `<div class="planet p${id}"></div><div class="planet-blind-mask"></div>`;
+                grid.appendChild(itemDiv);
+            });
+        }
+
+        function generateSequence(count) {
+            while (true) {
+                let seq = [];
+                let counts = {};
+                for (let i = 1; i <= 9; i++) counts[i] = 0;
+                let failed = false;
+
+                for (let i = 0; i < count; i++) {
+                    let validPlanets = [];
+                    for (let p = 1; p <= 9; p++) {
+                        if (counts[p] < 2 && (i === 0 || seq[i - 1] !== p)) {
+                            validPlanets.push(p);
+                        }
+                    }
+                    if (validPlanets.length === 0) {
+                        failed = true;
+                        break;
+                    }
+                    let selected = validPlanets[Math.floor(Math.random() * validPlanets.length)];
+                    seq.push(selected);
+                    counts[selected]++;
+                }
+                if (!failed) return seq; 
+            }
+        }
+
+        function nextRound() {
+            if (totalTime <= 0) return;
+            
+            isDisplaying = true;
+            isAnswering = false;
+            userSequence = [];
+            
+            initSlotBoxes(); 
+            renderShuffledMatrix(); 
+            
+            // 문제 출제 단계: 모든 개별 격자 아이템에disabled 클래스를 가동하여 터치를 막고 암막을 활성화
+            const items = document.querySelectorAll('.matrix-item');
+            items.forEach(item => item.classList.add('disabled'));
+
+            document.getElementById('message-prompt').innerText = "행성의 순서를 기억하세요!";
+            targetSequence = generateSequence(planetCount);
+
+            let step = 0;
+            const displayArea = document.getElementById('display-area');
+            displayArea.innerHTML = ''; 
+
+            clearInterval(displayInterval); 
+            displayInterval = setInterval(() => {
+                if (step < targetSequence.length) {
+                    const planetId = targetSequence[step];
+                    displayArea.innerHTML = `<div class="planet p${planetId}"></div>`;
+                    playTone('appear'); 
+                    step++;
+                } else {
+                    clearInterval(displayInterval);
+                    displayArea.innerHTML = ''; 
+                    isDisplaying = false;
+                    isAnswering = true;
+                    
+                    // 정답 맞히기 단계: 모든 격자에서disabled 클래스를 해제하여 암막을 걷어내고 활성화
+                    items.forEach(item => item.classList.remove('disabled'));
+                    document.getElementById('message-prompt').innerText = "보았던 행성을 순서대로 선택하세요!";
+                }
+            }, 1000);
+        }
+
+        function selectPlanet(id) {
+            if (!isAnswering || userSequence.length >= planetCount) return;
+
+            const currentIdx = userSequence.length;
+            userSequence.push(id);
+            const correctId = targetSequence[currentIdx];
+
+            const targetBox = document.getElementById(`slot-box-${currentIdx}`);
+            if(!targetBox) return;
+            
+            const slotItem = document.createElement('div');
+            slotItem.className = 'slot-item';
+            slotItem.innerHTML = `<div class="planet p${id}"></div>`;
+
+            if (id !== correctId) {
+                slotItem.classList.add('wrong-mark');
+                playTone('wrong'); 
+            } else {
+                score++;
+                document.getElementById('score').innerText = score;
+                playTone('click'); 
+            }
+            
+            targetBox.appendChild(slotItem);
+
+            if (userSequence.length === planetCount) {
+                isAnswering = false;
+                
+                const isAllCorrect = userSequence.every((val, index) => val === targetSequence[index]);
+                if (isAllCorrect) {
+                    setTimeout(() => playTone('round_clear'), 200);
+                }
+
+                setTimeout(() => {
+                    nextRound();
+                }, 1500); 
+            }
+        }
+
+        function endGame() {
+            clearInterval(gameTimer);
+            clearInterval(displayInterval);
+            isAnswering = false;
+            isDisplaying = false;
+            
+            playTone('game_over'); 
+            document.getElementById('final-score').innerText = score;
+            document.getElementById('game-over-overlay').classList.remove('hidden');
+        }
+
+        function resetToSetup() {
+            document.getElementById('setup-screen').classList.remove('hidden');
+            document.getElementById('game-screen').classList.add('hidden');
+            document.getElementById('game-over-overlay').classList.add('hidden');
+        }
+    </script>
+</body>
+</html>

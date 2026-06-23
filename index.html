@@ -49,7 +49,7 @@
         .setup-title {
             color: #60a5fa;
             margin-top: 0;
-            margin-bottom: 25px; /* 첫 화면 최고점수 제거로 마진 확보 */
+            margin-bottom: 25px;
             font-size: 26px;
             text-shadow: 0 0 10px rgba(96, 165, 250, 0.5);
         }
@@ -98,23 +98,45 @@
             transform: translateY(-2px);
         }
 
+        /* [디자인 수정] 상단 상태바 레이아웃 두 줄 배치 및 고도화 */
         .status-bar {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            margin-bottom: 15px;
+            border-bottom: 1px solid #334155;
+            padding-bottom: 12px;
+        }
+
+        .status-row {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            font-size: 14px;
+            font-size: 15px;
             font-weight: bold;
-            margin-bottom: 15px;
-            border-bottom: 1px solid #334155;
-            padding-bottom: 10px;
+        }
+
+        .score-row {
+            background-color: rgba(15, 23, 42, 0.4);
+            padding: 6px 12px;
+            border-radius: 6px;
+            font-size: 14px;
+        }
+
+        .high-score-text {
+            color: #fcd34d;
+        }
+
+        .current-score-text {
+            color: #60a5fa;
         }
 
         .quit-btn {
             background: linear-gradient(135deg, #ef4444, #b91c1c);
-            padding: 6px 12px;
-            font-size: 12px;
+            padding: 6px 14px;
+            font-size: 13px;
             width: auto;
-            border-radius: 4px;
+            border-radius: 5px;
             box-shadow: none;
         }
         .quit-btn:hover {
@@ -274,10 +296,14 @@
 
     <div id="game-screen" class="container-panel hidden">
         <div class="status-bar">
-            <div>남은 시간: <span id="timer">00:00</span></div>
-            <div>최고점(<span id="game-high-time-label">1분</span>): <span id="game-high-score">0</span></div>
-            <div>점수: <span id="score">0</span></div>
-            <button class="quit-btn" onclick="endGame()">그만하기</button>
+            <div class="status-row">
+                <div>⌛ 남은 시간: <span id="timer">00:00</span></div>
+                <button class="quit-btn" onclick="endGame()">그만하기</button>
+            </div>
+            <div class="status-row score-row">
+                <div class="high-score-text">🏆 최고점(<span id="game-high-time-label">1분</span>): <span id="game-high-score">0</span></div>
+                <div class="current-score-text">✨ 점수: <span id="score">0</span></div>
+            </div>
         </div>
 
         <div id="message-prompt">준비하세요...</div>
@@ -339,12 +365,12 @@
 
         // --- [게임 로직 핵심부] ---
         let planetCount = 3;  
-        let totalTimeSetting = 1; // 분 단위 설정 기록용
+        let totalTimeSetting = 1; 
         let totalTime = 60;   
         let gameTimer = null;
         let displayInterval = null; 
         let score = 0;
-        let highScore = 0; // 현재 셋팅된 시간에 대응하는 최고 기록용
+        let highScore = 0; 
         
         let targetSequence = []; 
         let userSequence = [];   
@@ -371,7 +397,6 @@
             if (savedTime) document.getElementById('time-select').value = savedTime;
         }
 
-        // [핵심 로직] 선택한 훈련 시간에 대응하는 최고 점수를 격리하여 불러오는 함수
         function loadHighScoreForTime(minutes) {
             const savedHighScore = localStorage.getItem(`pm_highScore_${minutes}min`);
             return savedHighScore ? parseInt(savedHighScore) : 0;
@@ -457,7 +482,7 @@
 
         function executeCoreGameSetup() {
             score = 0;
-            highScore = loadHighScoreForTime(totalTimeSetting); // 세팅된 시간에 맞는 최고기록 로드
+            highScore = loadHighScoreForTime(totalTimeSetting); 
             
             document.getElementById('score').innerText = score;
             document.getElementById('game-high-time-label').innerText = `${totalTimeSetting}분`;
@@ -616,7 +641,6 @@
             clearInterval(gameTimer); clearInterval(displayInterval);
             isAnswering = false; isDisplaying = false;
             
-            // 현재 설정 시간 기준으로 격리 저장 처리
             if (score > highScore) {
                 highScore = score;
             }

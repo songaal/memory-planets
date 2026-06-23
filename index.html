@@ -98,7 +98,6 @@
             transform: translateY(-2px);
         }
 
-        /* [디자인 수정] 상단 상태바 레이아웃 두 줄 배치 및 고도화 */
         .status-bar {
             display: flex;
             flex-direction: column;
@@ -123,13 +122,8 @@
             font-size: 14px;
         }
 
-        .high-score-text {
-            color: #fcd34d;
-        }
-
-        .current-score-text {
-            color: #60a5fa;
-        }
+        .high-score-text { color: #fcd34d; }
+        .current-score-text { color: #60a5fa; }
 
         .quit-btn {
             background: linear-gradient(135deg, #ef4444, #b91c1c);
@@ -144,7 +138,6 @@
             transform: translateY(-1px);
         }
 
-        /* 행성 오브젝트 스타일 */
         .planet {
             width: 65px;
             height: 65px;
@@ -392,7 +385,6 @@
         function loadSettings() {
             const savedCount = localStorage.getItem('pm_planetCount');
             const savedTime = localStorage.getItem('pm_totalTime');
-
             if (savedCount) document.getElementById('count-select').value = savedCount;
             if (savedTime) document.getElementById('time-select').value = savedTime;
         }
@@ -411,14 +403,18 @@
             }
         }
 
+        // [핵심 업데이트] 햅틱 강도 및 고유 패턴 전면 강화
         function triggerHaptic(type) {
             if ('vibrate' in navigator) {
                 if (type === 'click') {
-                    navigator.vibrate(35);
+                    // 단발성이지만 묵직하게 인지되도록 90ms로 연장
+                    navigator.vibrate(90); 
                 } else if (type === 'wrong') {
-                    navigator.vibrate([80, 60, 100]);
+                    // 강력하게 두 번 때리는 진동 경고 패턴 (200ms 진동, 50ms 대기, 250ms 진동)
+                    navigator.vibrate([200, 50, 250]); 
                 } else if (type === 'clear') {
-                    navigator.vibrate([50, 40, 50, 40, 80]);
+                    // 올클리어 시 우웅-웅-웅 강한 리듬감 부여 (120ms 진동, 60ms 대기, 120ms 진동, 60ms 대기, 200ms 진동)
+                    navigator.vibrate([120, 60, 120, 60, 200]); 
                 }
             }
         }
@@ -465,8 +461,7 @@
         }
 
         function startGame() {
-            initAudio(); 
-            saveSettings();
+            initAudio(); saveSettings();
             planetCount = parseInt(document.getElementById('count-select').value);
             totalTimeSetting = parseInt(document.getElementById('time-select').value);
             totalTime = totalTimeSetting * 60;
@@ -492,17 +487,13 @@
             document.getElementById('game-screen').classList.remove('hidden');
             document.getElementById('game-over-overlay').classList.add('hidden'); 
 
-            playTone('ready_go'); 
-            startCountdown();
-            nextRound();
+            playTone('ready_go'); startCountdown(); nextRound();
         }
 
         function startCountdown() {
-            clearInterval(gameTimer);
-            updateTimerDisplay();
+            clearInterval(gameTimer); updateTimerDisplay();
             gameTimer = setInterval(() => {
-                totalTime--;
-                updateTimerDisplay();
+                totalTime--; updateTimerDisplay();
                 if (totalTime <= 5 && totalTime > 0) playTone('tick');
                 if (totalTime <= 0) endGame();
             }, 1000);
@@ -581,8 +572,7 @@
                 if (step < targetSequence.length) {
                     const planetId = targetSequence[step];
                     displayArea.innerHTML = `<div class="planet p${planetId}"></div>`;
-                    playTone('appear'); 
-                    step++;
+                    playTone('appear'); step++;
                 } else {
                     clearInterval(displayInterval);
                     displayArea.innerHTML = ''; isDisplaying = false; isAnswering = true;
@@ -641,9 +631,7 @@
             clearInterval(gameTimer); clearInterval(displayInterval);
             isAnswering = false; isDisplaying = false;
             
-            if (score > highScore) {
-                highScore = score;
-            }
+            if (score > highScore) highScore = score;
             localStorage.setItem(`pm_highScore_${totalTimeSetting}min`, highScore);
 
             playTone('game_over'); 

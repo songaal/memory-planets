@@ -306,7 +306,23 @@
         }
         .p2 { background: radial-gradient(circle at 30% 30%, #e2e8f0, #475569); }
         .p3 { background: radial-gradient(circle at 30% 30%, #fcd34d, #b45309); }
-        .p4 { background: radial-gradient(circle at 30% 30%, #6ee7b7, #10b981, #047857, #0b1528); }
+        
+        /* [요청 반영] 제공된 실물 지구 사진(Blue Marble)을 토대로 정교하게 수정한 그래픽 레이어 */
+        .p4 { 
+            background: 
+                /* 4. 흰색 구름 소용돌이 이펙트 레이어 (위치 분산) */
+                radial-gradient(circle at 25% 45%, rgba(255, 255, 255, 0.45) 0%, transparent 35%),
+                radial-gradient(circle at 75% 35%, rgba(255, 255, 255, 0.35) 0%, transparent 25%),
+                radial-gradient(circle at 55% 70%, rgba(255, 255, 255, 0.4) 0%, transparent 30%),
+                /* 3. 남미 대륙 패턴 레이어 (우하단 초록/황토 믹스) */
+                radial-gradient(circle at 65% 70%, #15803d 0%, #16a34a 20%, #a16207 40%, transparent 65%),
+                /* 2. 북미 대륙 패턴 레이어 (좌상단 초록/브라운 믹스) */
+                radial-gradient(circle at 35% 30%, #166534 0%, #15803d 25%, #854d0e 45%, transparent 60%),
+                /* 1. 딥블루 해양 베이스 구체 레이어 */
+                radial-gradient(circle at 40% 40%, #2563eb 0%, #1d4ed8 45%, #1e3a8a 100%);
+            box-shadow: inset -6px -6px 12px rgba(0, 0, 0, 0.85), 0 0 10px rgba(37, 99, 235, 0.4);
+        }
+        
         .p5 { background: radial-gradient(circle at 30% 30%, #ef4444, #991b1b); }
         .p6 { background: repeating-linear-gradient(45deg, #f59e0b, #b45309 8px, #78350f 16px); }
         
@@ -469,7 +485,7 @@
         let displayTimeoutRef = null; 
         let score = 0;
         let highScore = 0; 
-        let comboCount = 0; // 연속 퍼펙트 콤보 추적 변수 추가
+        let comboCount = 0; 
         
         let targetSequence = []; 
         let userSequence = [];   
@@ -491,7 +507,19 @@
 
         window.addEventListener('load', () => {
             loadSettings();
+            
+            // [요청 반영] PWA 환경 백그라운드 전환 복귀 시 음향이 끊기거나 먹통이 되는 버그 방어막 구축
+            document.addEventListener('visibilitychange', handleContextResume);
+            window.addEventListener('focus', handleContextResume);
         });
+
+        function handleContextResume() {
+            if (document.visibilityState === 'visible' && audioCtx) {
+                if (audioCtx.state === 'suspended' || audioCtx.state === 'interrupted') {
+                    audioCtx.resume().catch(e => console.log("AudioContext resume failed:", e));
+                }
+            }
+        }
 
         function saveSettings() {
             localStorage.setItem('pm_planetCount_v8', document.getElementById('count-select').value);
@@ -519,17 +547,20 @@
             }
         }
 
-        // [요청 반영] 콤보 달성 시 극도로 강력하고 짜릿한 우르르쾅쾅 진동 패턴 추가
+        // [요청 반영] 틀렸을 때의 햅틱을 극도로 억제(미세 차단)하고 정답 및 연속 콤보일 때 손맛이 압도적으로 강해지도록 정밀 조율
         function triggerHaptic(type, currentCombo = 0) {
             if ('vibrate' in navigator) {
                 if (type === 'click') {
-                    navigator.vibrate([80, 40, 150]); 
+                    // 정답 터치 시: 묵직하고 탄력 있는 기분 좋은 더블 피드백 패키지 (확실히 강하게)
+                    navigator.vibrate([60, 30, 100]); 
                 } else if (type === 'clear') {
-                    navigator.vibrate([100, 40, 100, 40, 250]); 
+                    // 라운드 완벽 클리어 시: 성공을 축하하는 우아하고 긴 리드미컬 햅틱
+                    navigator.vibrate([100, 40, 100, 40, 200]); 
                 } else if (type === 'wrong') {
-                    navigator.vibrate(25); 
+                    // 틀렸을 때: 기존의 불쾌하고 강한 충격을 없애고, 오직 '아주 작고 가볍게 툭' 끊어지는 10ms 초미세 펄스만 인가 (정답 대비 대폭 약화)
+                    navigator.vibrate(10); 
                 } else if (type === 'combo') {
-                    // 콤보가 쌓일수록 진동 강도와 연타 횟수가 기하급수적으로 늘어나는 울트라 헤비 햅틱
+                    // 연속 콤보 누적 시: 폭발적인 도파민 콤보 타격감을 선사하는 울트라 메가 헤비 햅틱 어레이
                     let pattern = [250, 30, 250];
                     const extraPulses = Math.min(currentCombo, 4);
                     for (let i = 0; i < extraPulses; i++) {
@@ -540,7 +571,6 @@
             }
         }
 
-        // [요청 반영] 연속 퍼펙트 콤보 시 고조되는 화려하고 풍성한 사운드 음향 레이어링 추가
         function playTone(type, currentCombo = 0) {
             try {
                 initAudio();
@@ -587,14 +617,12 @@
                     gain.gain.setValueAtTime(0.3, now); gain.gain.exponentialRampToValueAtTime(0.01, now + 0.2);
                     osc.start(now); osc.stop(now + 0.2);
                 } else if (type === 'round_clear') {
-                    // 1번째 퍼펙트 (기본)
                     osc.type = 'sine'; osc.frequency.setValueAtTime(523.25, now); osc.frequency.setValueAtTime(659.25, now + 0.06); osc.frequency.setValueAtTime(783.99, now + 0.12); osc.frequency.setValueAtTime(1046.50, now + 0.18);
                     gain.gain.setValueAtTime(0.15, now); gain.gain.exponentialRampToValueAtTime(0.01, now + 0.35);
                     osc.start(now); osc.stop(now + 0.35);
                 } else if (type === 'combo') {
-                    // 콤보 증가 시 고조되는 축제 분위기의 신나는 아르페지오 멀티 신디사이저 사운드
                     const pitchMultiplier = 1 + (currentCombo * 0.08); 
-                    const base = 523.25 * pitchMultiplier; // 콤보 누적에 따라 기본 톤 전체 상승
+                    const base = 523.25 * pitchMultiplier; 
                     
                     osc.type = 'sine';
                     osc.frequency.setValueAtTime(base, now);
@@ -605,7 +633,6 @@
                     gain.gain.exponentialRampToValueAtTime(0.005, now + 0.4);
                     osc.start(now); osc.stop(now + 0.4);
 
-                    // 화려함과 에너지를 증폭하기 위한 서브 트라이앵글 화음 오실레이터 동시 레이어링
                     const subOsc = audioCtx.createOscillator();
                     const subGain = audioCtx.createGain();
                     subOsc.type = 'triangle';
@@ -635,7 +662,7 @@
 
         function executeCoreGameSetup() {
             score = 0;
-            comboCount = 0; // 게임 시작 시 초기화
+            comboCount = 0; 
             highScore = loadHighScoreForTime(totalTimeSetting); 
             
             document.getElementById('score').innerText = score;
@@ -806,6 +833,11 @@
         function selectPlanet(id) {
             if (!isAnswering || userSequence.length >= planetCount) return;
 
+            // 터치 시 오디오 컨텍스트 상태 이중 체크 및 강제 활성화 (PWA 복귀 안전장치)
+            if (audioCtx && audioCtx.state === 'suspended') {
+                audioCtx.resume();
+            }
+
             const currentIdx = userSequence.length;
             userSequence.push(id);
             const correctId = targetSequence[currentIdx];
@@ -813,7 +845,7 @@
             const badge = document.getElementById(`preview-badge-${currentIdx}`);
             
             if (id !== correctId) {
-                comboCount = 0; // 한 번이라도 틀리면 실시간으로 콤보 즉시 리셋
+                comboCount = 0; 
                 if (badge) {
                     badge.classList.add('wrong-badge');
                     badge.innerHTML = `<div class="planet ${planetNames[id]}"></div>`;
@@ -837,7 +869,7 @@
         function skipRound() {
             if (!isAnswering) return;
             isAnswering = false;
-            comboCount = 0; // 스킵 시 콤보 리셋
+            comboCount = 0; 
             document.getElementById('skip-btn').disabled = true;
 
             const items = document.querySelectorAll('.matrix-item');
@@ -870,10 +902,6 @@
 
                 const isAllCorrect = (currentRoundScore === planetCount);
                 if (isAllCorrect) {
-                    // [요청 반영] 콤보 스코어 배율 계산 공식 시스템 정교화 구축
-                    // 첫 퍼펙트: (행성수*2)*1배 = 6점 (기본 클릭 3점 누적 상태이므로 추가 보너스로 3점 더해줌)
-                    // 콤보 +1: (행성수*2)*2배 = 12점 (기본 클릭 3점 누적 상태이므로 추가 보너스로 9점 더해줌)
-                    // 콤보 +2: (행성수*2)*3배 = 18점 (기본 클릭 3점 누적 상태이므로 추가 보너스로 15점 더해줌)
                     const roundTotalScore = (planetCount * 2) * (1 + comboCount);
                     const netBonusToAdd = roundTotalScore - planetCount; 
                     
@@ -883,22 +911,20 @@
                     setTimeout(() => {
                         const promptEl = document.getElementById('message-prompt');
                         if (comboCount > 0) {
-                            // 콤보 모드 돌입 (+1 콤보 이상일 때) -> 특별 연출, 화려한 사운드, 메가 햅틱
-                            promptEl.style.color = "#f43f5e"; // 더욱 강렬한 로즈 핑크 테마 색상 변경
+                            promptEl.style.color = "#f43f5e"; 
                             promptEl.innerText = `🔥 COMBO +${comboCount}! (+${roundTotalScore})`;
                             playTone('combo', comboCount); 
                             triggerHaptic('combo', comboCount); 
                         } else {
-                            // 첫 번째 퍼펙트 달성 시
                             promptEl.style.color = "#fbbf24";
                             promptEl.innerText = `✨ PERFECT! (+${roundTotalScore})`;
                             playTone('round_clear'); 
                             triggerHaptic('clear'); 
                         }
-                        comboCount++; // 다음 라운드를 위해 콤보 스택 누적 증가
+                        comboCount++; 
                     }, 150);
                 } else {
-                    comboCount = 0; // 퍼펙트 실패 시 콤보 완전 파괴 및 초기화
+                    comboCount = 0; 
                 }
 
                 if (score > highScore) {

@@ -252,7 +252,7 @@
             gap: 6px;
             box-sizing: border-box;
             position: relative;
-            min-height: 85px; /* 틀 유지를 위한 최소 높이 고정 */
+            min-height: 85px;
         }
 
         .matrix-item:hover {
@@ -266,17 +266,16 @@
             filter: none !important;
         }
 
-        /* [요청 반영] 문제 출제 단계(question-phase)일 때 전체적인 버튼의 틀(레이아웃)은 그대로 유지하되, 내부 행성과 라벨만 숨김 처리 */
         .matrix.question-phase .matrix-item {
             pointer-events: none;
             cursor: default;
-            background-color: rgba(30, 41, 59, 0.25); /* 출제 중임을 알리는 은은한 빈 패널 효과 */
+            background-color: rgba(30, 41, 59, 0.25);
             border-color: rgba(30, 41, 59, 0.6);
         }
         
         .matrix.question-phase .matrix-item .planet,
         .matrix.question-phase .matrix-item .label-tag {
-            visibility: hidden; /* 영역(틀)은 유지하고 시각적으로만 블라인드 */
+            visibility: hidden;
         }
 
         .label-tag {
@@ -305,23 +304,22 @@
             0% { box-shadow: 0 0 10px #f97316; }
             100% { box-shadow: 0 0 20px #ef4444, 0 0 8px #f97316; }
         }
-        .p2 { background: radial-gradient(circle at 30% 30%, #e2e8f0, #475569); } /* Mercury */
-        .p3 { background: radial-gradient(circle at 30% 30%, #fcd34d, #b45309); } /* Venus */
-        .p4 { background: radial-gradient(circle at 30% 30%, #6ee7b7, #10b981, #047857, #0b1528); } /* Earth */
-        .p5 { background: radial-gradient(circle at 30% 30%, #ef4444, #991b1b); } /* Mars */
-        .p6 { background: repeating-linear-gradient(45deg, #f59e0b, #b45309 8px, #78350f 16px); } /* Jupiter */
+        .p2 { background: radial-gradient(circle at 30% 30%, #e2e8f0, #475569); }
+        .p3 { background: radial-gradient(circle at 30% 30%, #fcd34d, #b45309); }
+        .p4 { background: radial-gradient(circle at 30% 30%, #6ee7b7, #10b981, #047857, #0b1528); }
+        .p5 { background: radial-gradient(circle at 30% 30%, #ef4444, #991b1b); }
+        .p6 { background: repeating-linear-gradient(45deg, #f59e0b, #b45309 8px, #78350f 16px); }
         
-        .p7 { background: radial-gradient(circle at 30% 30%, #fef08a, #ca8a04); } /* Saturn */
+        .p7 { background: radial-gradient(circle at 30% 30%, #fef08a, #ca8a04); }
         .p7::after {
             content: ''; position: absolute; top: 50%; left: 50%; width: 120%; height: 13%;
             border: 2px solid rgba(234, 179, 8, 0.75); border-radius: 50%; transform: translate(-50%, -50%) rotate(-15deg);
             box-sizing: border-box;
         }
         
-        .p8 { background: radial-gradient(circle at 30% 30%, #22d3ee, #0369a1); } /* Uranus */
-        .p9 { background: radial-gradient(circle at 30% 30%, #2563eb, #1e3a8a, #0f172a); } /* Neptune */
+        .p8 { background: radial-gradient(circle at 30% 30%, #22d3ee, #0369a1); }
+        .p9 { background: radial-gradient(circle at 30% 30%, #2563eb, #1e3a8a, #0f172a); }
         
-        /* 슬롯 박스 내 오답 마크 */
         .wrong-badge::after {
             content: '✕';
             position: absolute;
@@ -471,6 +469,7 @@
         let displayTimeoutRef = null; 
         let score = 0;
         let highScore = 0; 
+        let comboCount = 0; // 연속 퍼펙트 콤보 추적 변수 추가
         
         let targetSequence = []; 
         let userSequence = [];   
@@ -495,19 +494,19 @@
         });
 
         function saveSettings() {
-            localStorage.setItem('pm_planetCount_v7', document.getElementById('count-select').value);
-            localStorage.setItem('pm_totalTime_v7', document.getElementById('time-select').value);
+            localStorage.setItem('pm_planetCount_v8', document.getElementById('count-select').value);
+            localStorage.setItem('pm_totalTime_v8', document.getElementById('time-select').value);
         }
 
         function loadSettings() {
-            const savedCount = localStorage.getItem('pm_planetCount_v7');
-            const savedTime = localStorage.getItem('pm_totalTime_v7');
+            const savedCount = localStorage.getItem('pm_planetCount_v8');
+            const savedTime = localStorage.getItem('pm_totalTime_v8');
             if (savedCount) document.getElementById('count-select').value = savedCount;
             if (savedTime) document.getElementById('time-select').value = savedTime;
         }
 
         function loadHighScoreForTime(minutes) {
-            const savedHighScore = localStorage.getItem(`pm_highScore_v7_${minutes}min`);
+            const savedHighScore = localStorage.getItem(`pm_highScore_v8_${minutes}min`);
             return savedHighScore ? parseInt(savedHighScore) : 0;
         }
 
@@ -520,15 +519,29 @@
             }
         }
 
-        function triggerHaptic(type) {
+        // [요청 반영] 콤보 달성 시 극도로 강력하고 짜릿한 우르르쾅쾅 진동 패턴 추가
+        function triggerHaptic(type, currentCombo = 0) {
             if ('vibrate' in navigator) {
-                if (type === 'click') navigator.vibrate(80); 
-                else if (type === 'wrong') navigator.vibrate([150, 50, 150]); 
-                else if (type === 'clear') navigator.vibrate([100, 50, 100, 50, 150]); 
+                if (type === 'click') {
+                    navigator.vibrate([80, 40, 150]); 
+                } else if (type === 'clear') {
+                    navigator.vibrate([100, 40, 100, 40, 250]); 
+                } else if (type === 'wrong') {
+                    navigator.vibrate(25); 
+                } else if (type === 'combo') {
+                    // 콤보가 쌓일수록 진동 강도와 연타 횟수가 기하급수적으로 늘어나는 울트라 헤비 햅틱
+                    let pattern = [250, 30, 250];
+                    const extraPulses = Math.min(currentCombo, 4);
+                    for (let i = 0; i < extraPulses; i++) {
+                        pattern.push(30, 300);
+                    }
+                    navigator.vibrate(pattern);
+                }
             }
         }
 
-        function playTone(type) {
+        // [요청 반영] 연속 퍼펙트 콤보 시 고조되는 화려하고 풍성한 사운드 음향 레이어링 추가
+        function playTone(type, currentCombo = 0) {
             try {
                 initAudio();
                 if(!audioCtx || audioCtx.state === 'suspended') return;
@@ -574,9 +587,35 @@
                     gain.gain.setValueAtTime(0.3, now); gain.gain.exponentialRampToValueAtTime(0.01, now + 0.2);
                     osc.start(now); osc.stop(now + 0.2);
                 } else if (type === 'round_clear') {
+                    // 1번째 퍼펙트 (기본)
                     osc.type = 'sine'; osc.frequency.setValueAtTime(523.25, now); osc.frequency.setValueAtTime(659.25, now + 0.06); osc.frequency.setValueAtTime(783.99, now + 0.12); osc.frequency.setValueAtTime(1046.50, now + 0.18);
                     gain.gain.setValueAtTime(0.15, now); gain.gain.exponentialRampToValueAtTime(0.01, now + 0.35);
                     osc.start(now); osc.stop(now + 0.35);
+                } else if (type === 'combo') {
+                    // 콤보 증가 시 고조되는 축제 분위기의 신나는 아르페지오 멀티 신디사이저 사운드
+                    const pitchMultiplier = 1 + (currentCombo * 0.08); 
+                    const base = 523.25 * pitchMultiplier; // 콤보 누적에 따라 기본 톤 전체 상승
+                    
+                    osc.type = 'sine';
+                    osc.frequency.setValueAtTime(base, now);
+                    osc.frequency.setValueAtTime(base * 1.25, now + 0.04);
+                    osc.frequency.setValueAtTime(base * 1.50, now + 0.08);
+                    osc.frequency.setValueAtTime(base * 2.00, now + 0.12);
+                    gain.gain.setValueAtTime(0.2, now);
+                    gain.gain.exponentialRampToValueAtTime(0.005, now + 0.4);
+                    osc.start(now); osc.stop(now + 0.4);
+
+                    // 화려함과 에너지를 증폭하기 위한 서브 트라이앵글 화음 오실레이터 동시 레이어링
+                    const subOsc = audioCtx.createOscillator();
+                    const subGain = audioCtx.createGain();
+                    subOsc.type = 'triangle';
+                    subOsc.frequency.setValueAtTime(base * 1.5, now);
+                    subOsc.frequency.setValueAtTime(base * 2.5, now + 0.06);
+                    subOsc.frequency.setValueAtTime(base * 3.0, now + 0.12);
+                    subOsc.connect(subGain); subGain.connect(audioCtx.destination);
+                    subGain.gain.setValueAtTime(0.1, now);
+                    subGain.gain.exponentialRampToValueAtTime(0.001, now + 0.35);
+                    subOsc.start(now); subOsc.stop(now + 0.35);
                 }
             } catch(e) { console.log(e); }
         }
@@ -596,6 +635,7 @@
 
         function executeCoreGameSetup() {
             score = 0;
+            comboCount = 0; // 게임 시작 시 초기화
             highScore = loadHighScoreForTime(totalTimeSetting); 
             
             document.getElementById('score').innerText = score;
@@ -617,7 +657,6 @@
             buildInputBadges(); 
             renderGridMatrix();
             
-            // [요청 반영] 레이아웃 틀은 그대로 두고 내부 컴포넌트만 블라인드 처리
             document.getElementById('matrix-grid').classList.add('question-phase');
             
             const prompt = document.getElementById('message-prompt');
@@ -718,9 +757,7 @@
                 buildInputBadges();
             }
             
-            // [요청 반영] 전체 판넬 구조(틀)는 고정하고, 클래스 제어로 버튼 내부 요소만 가려 레이아웃 시프트를 원천 방지합니다.
             document.getElementById('matrix-grid').classList.add('question-phase');
-            
             document.getElementById('skip-btn').disabled = true; 
             
             const prompt = document.getElementById('message-prompt');
@@ -751,7 +788,6 @@
                 } else {
                     isDisplaying = false; isAnswering = true;
                     
-                    // 문제가 모두 종료된 후 위치를 무작위로 섞어 렌더링하고 차단막 클래스를 제거합니다.
                     renderGridMatrix();
                     document.getElementById('matrix-grid').classList.remove('question-phase');
                     
@@ -777,6 +813,7 @@
             const badge = document.getElementById(`preview-badge-${currentIdx}`);
             
             if (id !== correctId) {
+                comboCount = 0; // 한 번이라도 틀리면 실시간으로 콤보 즉시 리셋
                 if (badge) {
                     badge.classList.add('wrong-badge');
                     badge.innerHTML = `<div class="planet ${planetNames[id]}"></div>`;
@@ -800,6 +837,7 @@
         function skipRound() {
             if (!isAnswering) return;
             isAnswering = false;
+            comboCount = 0; // 스킵 시 콤보 리셋
             document.getElementById('skip-btn').disabled = true;
 
             const items = document.querySelectorAll('.matrix-item');
@@ -832,14 +870,35 @@
 
                 const isAllCorrect = (currentRoundScore === planetCount);
                 if (isAllCorrect) {
-                    score += planetCount; 
+                    // [요청 반영] 콤보 스코어 배율 계산 공식 시스템 정교화 구축
+                    // 첫 퍼펙트: (행성수*2)*1배 = 6점 (기본 클릭 3점 누적 상태이므로 추가 보너스로 3점 더해줌)
+                    // 콤보 +1: (행성수*2)*2배 = 12점 (기본 클릭 3점 누적 상태이므로 추가 보너스로 9점 더해줌)
+                    // 콤보 +2: (행성수*2)*3배 = 18점 (기본 클릭 3점 누적 상태이므로 추가 보너스로 15점 더해줌)
+                    const roundTotalScore = (planetCount * 2) * (1 + comboCount);
+                    const netBonusToAdd = roundTotalScore - planetCount; 
+                    
+                    score += netBonusToAdd;
                     document.getElementById('score').innerText = score;
+
                     setTimeout(() => {
-                        document.getElementById('message-prompt').style.color = "#fbbf24";
-                        document.getElementById('message-prompt').innerText = `PERFECT BONUS! +${planetCount}`;
-                        playTone('round_clear'); 
-                        triggerHaptic('clear'); 
+                        const promptEl = document.getElementById('message-prompt');
+                        if (comboCount > 0) {
+                            // 콤보 모드 돌입 (+1 콤보 이상일 때) -> 특별 연출, 화려한 사운드, 메가 햅틱
+                            promptEl.style.color = "#f43f5e"; // 더욱 강렬한 로즈 핑크 테마 색상 변경
+                            promptEl.innerText = `🔥 COMBO +${comboCount}! (+${roundTotalScore})`;
+                            playTone('combo', comboCount); 
+                            triggerHaptic('combo', comboCount); 
+                        } else {
+                            // 첫 번째 퍼펙트 달성 시
+                            promptEl.style.color = "#fbbf24";
+                            promptEl.innerText = `✨ PERFECT! (+${roundTotalScore})`;
+                            playTone('round_clear'); 
+                            triggerHaptic('clear'); 
+                        }
+                        comboCount++; // 다음 라운드를 위해 콤보 스택 누적 증가
                     }, 150);
+                } else {
+                    comboCount = 0; // 퍼펙트 실패 시 콤보 완전 파괴 및 초기화
                 }
 
                 if (score > highScore) {
@@ -855,7 +914,7 @@
             isAnswering = false; isDisplaying = false;
             
             if (score > highScore) highScore = score;
-            localStorage.setItem(`pm_highScore_v7_${totalTimeSetting}min`, highScore);
+            localStorage.setItem(`pm_highScore_v8_${totalTimeSetting}min`, highScore);
 
             playTone('game_over'); 
             document.getElementById('final-score').innerText = score;

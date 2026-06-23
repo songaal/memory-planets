@@ -1,26 +1,31 @@
 <!DOCTYPE html>
-<html lang="ko">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>행성 기억력 훈련 게임</title>
+    <title>Cosmic Memory Trainer</title>
     
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <link rel="apple-touch-icon" href="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><circle cx='50' cy='50' r='40' fill='%232563eb'/><circle cx='35' cy='35' r='10' fill='%233b82f6'/></svg>">
-    <link rel="manifest" id="pwa-manifest">
 
     <style>
         :root {
-            --bg-color: #0b0f19;
-            --panel-color: #16223f;
-            --border-color: #2563eb;
+            --bg-color: #050b14;
+            --panel-color: #0b1528;
+            --border-color: #2663eb;
             --text-color: #ffffff;
         }
 
         body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, Roboto, sans-serif;
             background-color: var(--bg-color);
+            background-image: 
+                radial-gradient(white, rgba(255,255,255,.2) 2px, transparent 40px),
+                radial-gradient(white, rgba(255,255,255,.15) 1px, transparent 30px),
+                radial-gradient(white, rgba(255,255,255,.1) 2px, transparent 40px);
+            background-size: 550px 550px, 350px 350px, 250px 250px;
+            background-position: 0 0, 40px 60px, 130px 270px;
             color: var(--text-color);
             margin: 0;
             padding: 10px;
@@ -36,12 +41,12 @@
 
         .container-panel {
             background-color: var(--panel-color);
-            border: 3px solid var(--border-color);
-            border-radius: 15px;
+            border: 2px solid var(--border-color);
+            border-radius: 12px;
             padding: 20px;
             width: 100%;
-            max-width: 440px;
-            box-shadow: 0 0 20px rgba(37, 99, 235, 0.3);
+            max-width: 400px;
+            box-shadow: 0 0 25px rgba(37, 99, 235, 0.25);
             box-sizing: border-box;
             text-align: center;
         }
@@ -51,7 +56,10 @@
             margin-top: 0;
             margin-bottom: 25px;
             font-size: 26px;
-            text-shadow: 0 0 10px rgba(96, 165, 250, 0.5);
+            text-shadow: 0 0 10px rgba(96, 165, 250, 0.4);
+            font-weight: bold;
+            text-transform: uppercase;
+            letter-spacing: 1px;
         }
 
         .hidden { display: none !important; }
@@ -66,302 +74,401 @@
             margin-bottom: 8px;
             font-weight: bold;
             color: #93c5fd;
-            font-size: 15px;
+            font-size: 13px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
         }
 
         select {
             width: 100%;
             padding: 12px;
-            background-color: #0f172a;
+            background-color: #070e1b;
             color: white;
             border: 1px solid var(--border-color);
-            border-radius: 5px;
+            border-radius: 6px;
             font-size: 16px;
+            outline: none;
         }
 
-        button {
+        .main-btn {
             width: 100%;
-            padding: 12px;
+            padding: 14px;
             background: linear-gradient(135deg, #2563eb, #1d4ed8);
             color: white;
             border: none;
-            border-radius: 5px;
+            border-radius: 6px;
             font-size: 18px;
             font-weight: bold;
             cursor: pointer;
             transition: all 0.2s;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.2);
+            box-shadow: 0 4px 6px rgba(0,0,0,0.3);
         }
 
-        button:hover {
+        .main-btn:hover:not(:disabled) {
             background: linear-gradient(135deg, #3b82f6, #2563eb);
-            transform: translateY(-2px);
-        }
-
-        .status-bar {
-            display: flex;
-            flex-direction: column;
-            gap: 10px;
-            margin-bottom: 15px;
-            border-bottom: 1px solid #334155;
-            padding-bottom: 12px;
-        }
-
-        .status-row {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            font-size: 15px;
-            font-weight: bold;
-        }
-
-        .score-row {
-            background-color: rgba(15, 23, 42, 0.4);
-            padding: 6px 12px;
-            border-radius: 6px;
-            font-size: 14px;
-        }
-
-        .high-score-text { color: #fcd34d; }
-        .current-score-text { color: #60a5fa; }
-
-        .quit-btn {
-            background: linear-gradient(135deg, #ef4444, #b91c1c);
-            padding: 6px 14px;
-            font-size: 13px;
-            width: auto;
-            border-radius: 5px;
-            box-shadow: none;
-        }
-        .quit-btn:hover {
-            background: linear-gradient(135deg, #f87171, #ef4444);
             transform: translateY(-1px);
         }
 
-        .planet {
-            width: 65px;
-            height: 65px;
-            border-radius: 50%;
-            display: inline-block;
-            position: relative;
-            box-shadow: inset -8px -8px 16px rgba(0,0,0,0.8), 0 0 8px rgba(255,255,255,0.2);
+        .status-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid #1e293b;
         }
 
-        /* 행성 디자인 테마 */
-        .p1 { background: radial-gradient(circle at 30% 30%, #4ade80, #166534); } 
-        .p2 { background: radial-gradient(circle at 30% 30%, #ef4444, #991b1b); } 
-        .p3 { background: radial-gradient(circle at 30% 30%, #f97316, #7c2d12); }
-        .p3::after {
-            content: ''; position: absolute; top: 50%; left: 50%; width: 75px; height: 8px;
-            border: 3px solid rgba(254, 215, 170, 0.7); border-radius: 50%; transform: translate(-50%, -50%) rotate(-15deg); z-index: 2;
+        .time-box {
+            font-size: 16px;
+            font-weight: bold;
+            color: #ffffff;
+            display: flex;
+            align-items: center;
+            gap: 4px;
         }
-        .p4 { background: radial-gradient(circle at 30% 30%, #a78bfa, #4c1d95); } 
-        .p5 { background: repeating-linear-gradient(45deg, #fbbf24, #d97706 8px, #b45309 16px); } 
-        .p6 { background: radial-gradient(circle at 30% 30%, #fde047, #ca8a04); } 
-        .p7 { 
-            background: radial-gradient(circle at 30% 30%, rgba(236,72,153,0.4), rgba(157,23,77,0.9)),
-                        repeating-linear-gradient(0deg, transparent, transparent 6px, rgba(255, 255, 255, 0.15) 6px, rgba(255, 255, 255, 0.15) 10px); 
-        } 
-        .p8 { background: radial-gradient(circle at 30% 30%, #22d3ee, #0369a1); } 
-        .p9 { background: radial-gradient(circle at 30% 30%, #e2e8f0, #475569); } 
+
+        .quit-btn {
+            background: #ef4444;
+            color: white;
+            border: none;
+            padding: 4px 10px;
+            font-size: 12px;
+            font-weight: bold;
+            border-radius: 4px;
+            cursor: pointer;
+            text-transform: uppercase;
+        }
+
+        .scoreboard {
+            display: flex;
+            justify-content: space-between;
+            background-color: rgba(15, 23, 42, 0.6);
+            padding: 8px 12px;
+            border-radius: 6px;
+            font-size: 14px;
+            font-weight: bold;
+            margin-bottom: 15px;
+        }
+
+        .score-txt { color: #38bdf8; }
+        .best-txt { color: #fbbf24; }
+
+        .prompt-text {
+            font-size: 18px;
+            font-weight: bold;
+            color: #4ade80;
+            margin: 10px 0;
+            height: 24px;
+        }
 
         #display-area {
-            height: 110px;
+            height: 120px;
             display: flex;
             justify-content: center;
             align-items: center;
-            margin: 15px 0;
-            background-color: #0f172a;
-            border-radius: 10px;
-            border: 1px dashed #3b82f6;
+            margin-bottom: 12px;
+            background-color: rgba(7, 14, 27, 0.8);
+            border-radius: 8px;
+            border: 1px dashed rgba(38, 99, 235, 0.4);
+            position: relative;
+            overflow: hidden;
         }
-        #display-area .planet { width: 85px; height: 85px; }
-        #display-area .p3::after { width: 95px; height: 10px; }
 
-        .matrix-container { display: flex; justify-content: center; margin-bottom: 15px; }
+        #display-area .planet {
+            width: 70px;
+            height: 70px;
+        }
+
+        .input-order-container {
+            margin-bottom: 16px;
+            background-color: rgba(15, 23, 42, 0.3);
+            padding: 8px;
+            border-radius: 8px;
+        }
+
+        .input-order-label {
+            font-size: 11px;
+            color: #64748b;
+            font-weight: bold;
+            text-transform: uppercase;
+            margin-bottom: 6px;
+            letter-spacing: 0.5px;
+        }
+
+        .input-preview-row {
+            display: flex;
+            justify-content: center;
+            gap: 8px;
+            min-height: 44px;
+            align-items: center;
+        }
+
+        .preview-badge {
+            width: 44px;
+            height: 44px;
+            border-radius: 8px;
+            background-color: rgba(7, 14, 27, 0.6);
+            border: 2px dashed #1e293b;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            box-sizing: border-box;
+            transition: all 0.2s;
+            position: relative;
+        }
+
+        .preview-badge.filled {
+            background-color: #0f172a;
+            border: 2px solid #2563eb;
+        }
+
+        .preview-badge .planet {
+            width: 30px;
+            height: 30px;
+            box-shadow: inset -3px -3px 6px rgba(0,0,0,0.7);
+        }
+
         .matrix {
             display: grid;
             grid-template-columns: repeat(3, 1fr);
-            gap: 10px;
-            background-color: #0f172a;
+            gap: 12px;
+            background-color: rgba(7, 14, 27, 0.5);
             padding: 12px;
-            border-radius: 12px;
-            border: 2px solid var(--border-color);
+            border-radius: 10px;
+            margin-bottom: 15px;
+            transition: all 0.2s;
         }
 
         .matrix-item {
-            border: 1px solid #3b82f6;
-            border-radius: 10px;
-            padding: 4px;
+            background-color: rgba(30, 41, 59, 0.5);
+            border: 1px solid #1e293b;
+            border-radius: 8px;
+            padding: 10px 5px 6px 5px;
             cursor: pointer;
-            background-color: rgba(255,255,255,0.02);
-            transition: background 0.2s;
-            display: flex; justify-content: center; align-items: center;
+            transition: all 0.2s;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 6px;
+            box-sizing: border-box;
             position: relative;
-            width: 73px;
-            height: 73px;
+            min-height: 85px; /* 틀 유지를 위한 최소 높이 고정 */
+        }
+
+        .matrix-item:hover {
+            background-color: rgba(37, 99, 235, 0.15);
+            border-color: var(--border-color);
+        }
+
+        .matrix-item.disabled {
+            pointer-events: none;
+            opacity: 1 !important;
+            filter: none !important;
+        }
+
+        /* [요청 반영] 문제 출제 단계(question-phase)일 때 전체적인 버튼의 틀(레이아웃)은 그대로 유지하되, 내부 행성과 라벨만 숨김 처리 */
+        .matrix.question-phase .matrix-item {
+            pointer-events: none;
+            cursor: default;
+            background-color: rgba(30, 41, 59, 0.25); /* 출제 중임을 알리는 은은한 빈 패널 효과 */
+            border-color: rgba(30, 41, 59, 0.6);
+        }
+        
+        .matrix.question-phase .matrix-item .planet,
+        .matrix.question-phase .matrix-item .label-tag {
+            visibility: hidden; /* 영역(틀)은 유지하고 시각적으로만 블라인드 */
+        }
+
+        .label-tag {
+            font-size: 11px;
+            color: #64748b;
+            font-weight: bold;
+            text-transform: uppercase;
+        }
+
+        .planet {
+            width: 48px;
+            height: 48px;
+            border-radius: 50%;
+            display: inline-block;
+            position: relative;
+            box-shadow: inset -5px -5px 10px rgba(0,0,0,0.7), 0 0 6px rgba(255,255,255,0.1);
+        }
+
+        /* 9개 천체 디자인 */
+        .p1 { 
+            background: radial-gradient(circle at 50% 50%, #fff7ed, #f97316, #b91c1c); 
+            box-shadow: 0 0 15px #f97316, inset -4px -4px 8px rgba(0,0,0,0.5);
+            animation: sunPulse 2s infinite alternate;
+        }
+        @keyframes sunPulse {
+            0% { box-shadow: 0 0 10px #f97316; }
+            100% { box-shadow: 0 0 20px #ef4444, 0 0 8px #f97316; }
+        }
+        .p2 { background: radial-gradient(circle at 30% 30%, #e2e8f0, #475569); } /* Mercury */
+        .p3 { background: radial-gradient(circle at 30% 30%, #fcd34d, #b45309); } /* Venus */
+        .p4 { background: radial-gradient(circle at 30% 30%, #6ee7b7, #10b981, #047857, #0b1528); } /* Earth */
+        .p5 { background: radial-gradient(circle at 30% 30%, #ef4444, #991b1b); } /* Mars */
+        .p6 { background: repeating-linear-gradient(45deg, #f59e0b, #b45309 8px, #78350f 16px); } /* Jupiter */
+        
+        .p7 { background: radial-gradient(circle at 30% 30%, #fef08a, #ca8a04); } /* Saturn */
+        .p7::after {
+            content: ''; position: absolute; top: 50%; left: 50%; width: 120%; height: 13%;
+            border: 2px solid rgba(234, 179, 8, 0.75); border-radius: 50%; transform: translate(-50%, -50%) rotate(-15deg);
             box-sizing: border-box;
         }
-        .matrix-item:hover { background-color: rgba(59, 130, 246, 0.2); }
-
-        .matrix-item .planet-blind-mask {
-            position: absolute; top: 4px; left: 4px; right: 4px; bottom: 4px;
-            background-color: #0f172a; border-radius: 50%; z-index: 10; display: none;
+        
+        .p8 { background: radial-gradient(circle at 30% 30%, #22d3ee, #0369a1); } /* Uranus */
+        .p9 { background: radial-gradient(circle at 30% 30%, #2563eb, #1e3a8a, #0f172a); } /* Neptune */
+        
+        /* 슬롯 박스 내 오답 마크 */
+        .wrong-badge::after {
+            content: '✕';
+            position: absolute;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background-color: rgba(239, 68, 68, 0.5);
+            color: #ffffff;
+            font-size: 24px;
+            font-weight: bold;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            border-radius: 8px;
+            z-index: 5;
         }
 
-        .matrix-item.disabled { pointer-events: none; }
-        .matrix-item.disabled .planet-blind-mask { display: block; }
-
-        .slots-container { margin-top: 10px; text-align: left; }
-        .slots {
-            display: flex; flex-wrap: wrap; gap: 8px; min-height: 60px;
-            background-color: #0f172a; padding: 8px; border-radius: 8px;
-            border: 1px solid #334155; justify-content: center;
+        .bottom-action-container {
+            display: flex;
+            justify-content: center;
+            margin-top: 5px;
         }
 
-        .slot-box {
-            width: 50px; height: 50px; border: 2px dashed #475569; border-radius: 8px;
-            display: flex; justify-content: center; align-items: center; box-sizing: border-box;
-            background-color: rgba(0,0,0,0.2);
+        .skip-btn-small {
+            background-color: #1e293b;
+            border: 1px solid #334155;
+            color: #94a3b8;
+            padding: 5px 25px;
+            font-size: 12px;
+            font-weight: bold;
+            border-radius: 4px;
+            cursor: pointer;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            transition: all 0.2s;
         }
 
-        .slot-item { position: relative; width: 100%; height: 100%; display: flex; justify-content: center; align-items: center; }
-        .slot-item .planet { width: 40px; height: 40px; box-shadow: inset -4px -4px 8px rgba(0,0,0,0.8); }
-        .slot-item .p3::after { width: 46px; height: 6px; border-width: 2px; }
-
-        .wrong-mark::before, .wrong-mark::after {
-            content: ''; position: absolute; top: 50%; left: 50%; width: 80%; height: 4px;
-            background-color: #ef4444; border-radius: 2px; z-index: 10; box-shadow: 0 0 6px rgba(239, 68, 68, 0.8);
+        .skip-btn-small:hover:not(:disabled) {
+            background-color: #334155;
+            color: #ffffff;
+            border-color: #475569;
         }
-        .wrong-mark::before { transform: translate(-50%, -50%) rotate(45deg); }
-        .wrong-mark::after { transform: translate(-50%, -50%) rotate(-45deg); }
 
-        #message-prompt { font-size: 16px; font-weight: bold; color: #34d399; margin: 10px 0; height: 22px; }
+        .skip-btn-small:disabled {
+            opacity: 0.25;
+            cursor: not-allowed;
+        }
 
         #game-over-overlay {
             position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
-            background-color: rgba(11, 15, 25, 0.95);
+            background-color: rgba(5, 11, 20, 0.65);
+            backdrop-filter: blur(4px);
+            -webkit-backdrop-filter: blur(4px);
             display: flex; flex-direction: column; justify-content: center; align-items: center; z-index: 9999;
         }
 
-        .game-over-title { font-size: 30px; color: #f87171; font-weight: bold; margin-bottom: 10px; }
-        .game-over-score { font-size: 22px; margin-bottom: 30px; }
+        .game-over-title { font-size: 28px; color: #f87171; font-weight: bold; margin-bottom: 10px; letter-spacing: 1px; }
+        .game-over-score { font-size: 20px; margin-bottom: 30px; color: #e2e8f0; }
         
-        .button-group-row { display: flex; gap: 15px; width: 85%; max-width: 320px; }
-        .action-btn { border-radius: 25px; font-size: 16px; padding: 12px 0; text-align: center; }
+        .button-group-row { display: flex; gap: 15px; width: 80%; max-width: 300px; }
+        .action-btn { 
+            flex: 1; border-radius: 6px; font-size: 15px; padding: 12px 0; text-align: center; 
+            font-weight: bold; border: none; cursor: pointer; color: white;
+        }
         .retry-action { background: linear-gradient(135deg, #2563eb, #1d4ed8); }
-        .retry-action:hover { background: linear-gradient(135deg, #3b82f6, #2563eb); }
-        .home-action { background: linear-gradient(135deg, #475569, #334155); }
-        .home-action:hover { background: linear-gradient(135deg, #64748b, #475569); }
+        .home-action { background: #334155; }
     </style>
 </head>
 <body>
 
+    <!-- 1. Setup Screen -->
     <div id="setup-screen" class="container-panel">
-        <h1 class="setup-title">행성 기억력 훈련</h1>
+        <h1 class="setup-title">Cosmic Memory</h1>
         
         <div class="input-group">
-            <label for="count-select">연속 출현 행성 수 (개)</label>
+            <label for="count-select">Sequence Length</label>
             <select id="count-select" onchange="saveSettings()">
-                <option value="2">2개</option>
-                <option value="3" selected>3개</option>
-                <option value="4">4개</option>
-                <option value="5">5개</option>
-                <option value="6">6개</option>
-                <option value="7">7개</option>
-                <option value="8">8개</option>
-                <option value="9">9개</option>
+                <option value="2">2</option>
+                <option value="3" selected>3</option>
+                <option value="4">4</option>
+                <option value="5">5</option>
+                <option value="6">6</option>
+                <option value="7">7</option>
+                <option value="8">8</option>
             </select>
         </div>
         <div class="input-group">
-            <label for="time-select">총 훈련 시간 (분)</label>
+            <label for="time-select">Total Duration</label>
             <select id="time-select" onchange="saveSettings()">
-                <option value="1" selected>1분</option>
-                <option value="2">2분</option>
-                <option value="3">3분</option>
-                <option value="4">4분</option>
-                <option value="5">5분</option>
-                <option value="6">6분</option>
+                <option value="1" selected>1 Min</option>
+                <option value="2">2 Min</option>
+                <option value="3">3 Min</option>
+                <option value="4">4 Min</option>
+                <option value="5">5 Min</option>
+                <option value="6">6 Min</option>
             </select>
         </div>
-        <button id="start-btn" onclick="startGame()">훈련 시작</button>
+        <button class="main-btn" onclick="startGame()">START</button>
     </div>
 
+    <!-- 2. In-Game Main Frame -->
     <div id="game-screen" class="container-panel hidden">
-        <div class="status-bar">
-            <div class="status-row">
-                <div>⌛ 남은 시간: <span id="timer">00:00</span></div>
-                <button class="quit-btn" onclick="endGame()">그만하기</button>
-            </div>
-            <div class="status-row score-row">
-                <div class="high-score-text">🏆 최고점(<span id="game-high-time-label">1분</span>): <span id="game-high-score">0</span></div>
-                <div class="current-score-text">✨ 점수: <span id="score">0</span></div>
-            </div>
+        <div class="status-header">
+            <div class="time-box">⏳ Time Left: <span id="timer">00:00</span></div>
+            <button class="quit-btn" onclick="endGame()">QUIT</button>
         </div>
 
-        <div id="message-prompt">준비하세요...</div>
+        <div class="scoreboard">
+            <div>✨ Score: <span id="score">0</span></div>
+            <div class="best-txt">🏆 Best (<span id="game-high-time-label">1m</span>): <span id="game-high-score">0</span></div>
+        </div>
+
+        <div id="message-prompt" class="prompt-text">READY</div>
+        
+        <!-- Display Area -->
         <div id="display-area"></div>
 
-        <div class="matrix-container">
-            <div id="matrix-grid" class="matrix"></div>
+        <!-- Input Status Badge Box -->
+        <div class="input-order-container">
+            <div class="input-order-label">YOUR INPUT ORDER</div>
+            <div id="input-preview-row" class="input-preview-row"></div>
         </div>
 
-        <div class="slots-container">
-            <label>내가 선택한 순서</label>
-            <div id="slots" class="slots"></div>
+        <!-- Selection Matrix Pad Grid -->
+        <div id="matrix-grid" class="matrix"></div>
+
+        <!-- Bottom slim SKIP button -->
+        <div class="bottom-action-container">
+            <button id="skip-btn" class="skip-btn-small" onclick="skipRound()" disabled>SKIP</button>
         </div>
     </div>
 
+    <!-- 3. Game Over Overlay -->
     <div id="game-over-overlay" class="hidden">
-        <div class="game-over-title">훈련 종료</div>
-        <div class="game-over-score">최종 점수: <span id="final-score">0</span>점</div>
+        <div class="game-over-title">TRAINING OVER</div>
+        <div class="game-over-score">Final Score: <span id="final-score">0</span> pts</div>
         <div class="button-group-row">
-            <button class="action-btn retry-action" onclick="restartSameGame()">다시 하기</button>
-            <button class="action-btn home-action" onclick="resetToSetup()">처음으로</button>
+            <button class="action-btn retry-action" onclick="restartSameGame()">RETRY</button>
+            <button class="action-btn home-action" onclick="resetToSetup()">LOBBY</button>
         </div>
     </div>
 
     <script>
-        // --- [PWA 매니페스트 동적 생성 시스템] ---
-        const manifestContent = {
-            "name": "행성 기억력 훈련 게임",
-            "short_name": "행성기억력",
-            "start_url": ".",
-            "display": "standalone",
-            "background_color": "#0b0f19",
-            "theme_color": "#16223f",
-            "orientation": "portrait",
-            "icons": [
-                {
-                    "src": "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><circle cx='50' cy='50' r='40' fill='%232563eb'/><circle cx='35' cy='35' r='10' fill='%233b82f6'/></svg>",
-                    "sizes": "192x192",
-                    "type": "image/svg+xml"
-                },
-                {
-                    "src": "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><circle cx='50' cy='50' r='40' fill='%232563eb'/><circle cx='35' cy='35' r='10' fill='%233b82f6'/></svg>",
-                    "sizes": "512x512",
-                    "type": "image/svg+xml"
-                }
-            ]
-        };
-        const manifestBlob = new Blob([JSON.stringify(manifestContent)], {type: 'application/json'});
-        document.getElementById('pwa-manifest').setAttribute('href', URL.createObjectURL(manifestBlob));
-
-        if ('serviceWorker' in navigator) {
-            const swCode = `
-                self.addEventListener('install', e => self.skipWaiting());
-                self.addEventListener('fetch', e => e.respondWith(fetch(e.request).catch(() => new Response('오프라인'))));
-            `;
-            const swBlob = new Blob([swCode], {type: 'application/javascript'});
-            navigator.serviceWorker.register(URL.createObjectURL(swBlob)).catch(err => console.log(err));
-        }
-
-        // --- [게임 로직 핵심부] ---
+        // --- [Core Game Engine Variable States] ---
         let planetCount = 3;  
         let totalTimeSetting = 1; 
         let totalTime = 60;   
         let gameTimer = null;
-        let displayInterval = null; 
+        let displayTimeoutRef = null; 
         let score = 0;
         let highScore = 0; 
         
@@ -373,24 +480,34 @@
 
         let audioCtx = null;
 
+        const planetNames = {
+            1: "p1", 2: "p2", 3: "p3", 4: "p4",
+            5: "p5", 6: "p6", 7: "p7", 8: "p8", 9: "p9"
+        };
+
+        const planetLabels = {
+            1: "SUN", 2: "MERCURY", 3: "VENUS", 4: "EARTH", 
+            5: "MARS", 6: "JUPITER", 7: "SATURN", 8: "URANUS", 9: "NEPTUNE"
+        };
+
         window.addEventListener('load', () => {
             loadSettings();
         });
 
         function saveSettings() {
-            localStorage.setItem('pm_planetCount', document.getElementById('count-select').value);
-            localStorage.setItem('pm_totalTime', document.getElementById('time-select').value);
+            localStorage.setItem('pm_planetCount_v7', document.getElementById('count-select').value);
+            localStorage.setItem('pm_totalTime_v7', document.getElementById('time-select').value);
         }
 
         function loadSettings() {
-            const savedCount = localStorage.getItem('pm_planetCount');
-            const savedTime = localStorage.getItem('pm_totalTime');
+            const savedCount = localStorage.getItem('pm_planetCount_v7');
+            const savedTime = localStorage.getItem('pm_totalTime_v7');
             if (savedCount) document.getElementById('count-select').value = savedCount;
             if (savedTime) document.getElementById('time-select').value = savedTime;
         }
 
         function loadHighScoreForTime(minutes) {
-            const savedHighScore = localStorage.getItem(`pm_highScore_${minutes}min`);
+            const savedHighScore = localStorage.getItem(`pm_highScore_v7_${minutes}min`);
             return savedHighScore ? parseInt(savedHighScore) : 0;
         }
 
@@ -403,19 +520,11 @@
             }
         }
 
-        // [핵심 업데이트] 햅틱 강도 및 고유 패턴 전면 강화
         function triggerHaptic(type) {
             if ('vibrate' in navigator) {
-                if (type === 'click') {
-                    // 단발성이지만 묵직하게 인지되도록 90ms로 연장
-                    navigator.vibrate(90); 
-                } else if (type === 'wrong') {
-                    // 강력하게 두 번 때리는 진동 경고 패턴 (200ms 진동, 50ms 대기, 250ms 진동)
-                    navigator.vibrate([200, 50, 250]); 
-                } else if (type === 'clear') {
-                    // 올클리어 시 우웅-웅-웅 강한 리듬감 부여 (120ms 진동, 60ms 대기, 120ms 진동, 60ms 대기, 200ms 진동)
-                    navigator.vibrate([120, 60, 120, 60, 200]); 
-                }
+                if (type === 'click') navigator.vibrate(80); 
+                else if (type === 'wrong') navigator.vibrate([150, 50, 150]); 
+                else if (type === 'clear') navigator.vibrate([100, 50, 100, 50, 150]); 
             }
         }
 
@@ -428,34 +537,46 @@
                 osc.connect(gain); gain.connect(audioCtx.destination);
                 const now = audioCtx.currentTime;
 
-                if (type === 'ready_go') {
-                    osc.type = 'sine'; osc.frequency.setValueAtTime(392.00, now); osc.frequency.setValueAtTime(523.25, now + 0.15);
-                    gain.gain.setValueAtTime(0.18, now); gain.gain.exponentialRampToValueAtTime(0.005, now + 0.35);
+                if (type === 'ready') {
+                    osc.type = 'sine';
+                    osc.frequency.setValueAtTime(523.25, now); 
+                    osc.frequency.setValueAtTime(659.25, now + 0.1); 
+                    gain.gain.setValueAtTime(0.15, now);
+                    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.25);
+                    osc.start(now); osc.stop(now + 0.25);
+                } else if (type === 'go') {
+                    osc.type = 'sine';
+                    osc.frequency.setValueAtTime(392.00, now); 
+                    osc.frequency.setValueAtTime(415.30, now + 0.05); 
+                    osc.frequency.setValueAtTime(440.00, now + 0.10); 
+                    osc.frequency.setValueAtTime(493.88, now + 0.15); 
+                    gain.gain.setValueAtTime(0.2, now);
+                    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.35);
                     osc.start(now); osc.stop(now + 0.35);
                 } else if (type === 'tick') {
                     osc.type = 'triangle'; osc.frequency.setValueAtTime(800, now);
-                    gain.gain.setValueAtTime(0.04, now); gain.gain.exponentialRampToValueAtTime(0.001, now + 0.04);
+                    gain.gain.setValueAtTime(0.03, now); gain.gain.exponentialRampToValueAtTime(0.001, now + 0.04);
                     osc.start(now); osc.stop(now + 0.05);
                 } else if (type === 'game_over') {
                     osc.type = 'sine'; osc.frequency.setValueAtTime(587.33, now); osc.frequency.setValueAtTime(440.00, now + 0.12); osc.frequency.setValueAtTime(293.66, now + 0.24);
                     gain.gain.setValueAtTime(0.2, now); gain.gain.exponentialRampToValueAtTime(0.001, now + 0.5);
                     osc.start(now); osc.stop(now + 0.5);
                 } else if (type === 'appear') {
-                    osc.type = 'sine'; osc.frequency.setValueAtTime(330, now);
-                    gain.gain.setValueAtTime(0.06, now); gain.gain.exponentialRampToValueAtTime(0.001, now + 0.08);
+                    osc.type = 'sine'; osc.frequency.setValueAtTime(349.23, now); 
+                    gain.gain.setValueAtTime(0.05, now); gain.gain.exponentialRampToValueAtTime(0.001, now + 0.08);
                     osc.start(now); osc.stop(now + 0.08);
                 } else if (type === 'click') {
-                    osc.type = 'sine'; osc.frequency.setValueAtTime(400, now); osc.frequency.exponentialRampToValueAtTime(800, now + 0.1);
-                    gain.gain.setValueAtTime(0.25, now); gain.gain.exponentialRampToValueAtTime(0.01, now + 0.12);
-                    osc.start(now); osc.stop(now + 0.12);
+                    osc.type = 'sine'; osc.frequency.setValueAtTime(440, now); osc.frequency.exponentialRampToValueAtTime(880, now + 0.08);
+                    gain.gain.setValueAtTime(0.2, now); gain.gain.exponentialRampToValueAtTime(0.01, now + 0.1);
+                    osc.start(now); osc.stop(now + 0.1);
                 } else if (type === 'wrong') {
-                    osc.type = 'triangle'; osc.frequency.setValueAtTime(220, now); osc.frequency.setValueAtTime(140, now + 0.06);
-                    gain.gain.setValueAtTime(0.35, now); gain.gain.exponentialRampToValueAtTime(0.01, now + 0.22);
-                    osc.start(now); osc.stop(now + 0.22);
+                    osc.type = 'triangle'; osc.frequency.setValueAtTime(180, now); osc.frequency.setValueAtTime(120, now + 0.06);
+                    gain.gain.setValueAtTime(0.3, now); gain.gain.exponentialRampToValueAtTime(0.01, now + 0.2);
+                    osc.start(now); osc.stop(now + 0.2);
                 } else if (type === 'round_clear') {
-                    osc.type = 'sine'; osc.frequency.setValueAtTime(523.25, now); osc.frequency.setValueAtTime(659.25, now + 0.08); osc.frequency.setValueAtTime(783.99, now + 0.16);
-                    gain.gain.setValueAtTime(0.15, now); gain.gain.exponentialRampToValueAtTime(0.01, now + 0.3);
-                    osc.start(now); osc.stop(now + 0.3);
+                    osc.type = 'sine'; osc.frequency.setValueAtTime(523.25, now); osc.frequency.setValueAtTime(659.25, now + 0.06); osc.frequency.setValueAtTime(783.99, now + 0.12); osc.frequency.setValueAtTime(1046.50, now + 0.18);
+                    gain.gain.setValueAtTime(0.15, now); gain.gain.exponentialRampToValueAtTime(0.01, now + 0.35);
+                    osc.start(now); osc.stop(now + 0.35);
                 }
             } catch(e) { console.log(e); }
         }
@@ -469,8 +590,6 @@
         }
 
         function restartSameGame() {
-            planetCount = parseInt(document.getElementById('count-select').value);
-            totalTimeSetting = parseInt(document.getElementById('time-select').value);
             totalTime = totalTimeSetting * 60;
             executeCoreGameSetup();
         }
@@ -480,14 +599,47 @@
             highScore = loadHighScoreForTime(totalTimeSetting); 
             
             document.getElementById('score').innerText = score;
-            document.getElementById('game-high-time-label').innerText = `${totalTimeSetting}분`;
+            document.getElementById('game-high-time-label').innerText = `${totalTimeSetting}m`;
             document.getElementById('game-high-score').innerText = highScore;
             
             document.getElementById('setup-screen').classList.add('hidden');
             document.getElementById('game-screen').classList.remove('hidden');
             document.getElementById('game-over-overlay').classList.add('hidden'); 
 
-            playTone('ready_go'); startCountdown(); nextRound();
+            document.getElementById('skip-btn').disabled = true;
+
+            runStartCountdownSequence();
+        }
+
+        function runStartCountdownSequence() {
+            isDisplaying = true; isAnswering = false;
+            
+            buildInputBadges(); 
+            renderGridMatrix();
+            
+            // [요청 반영] 레이아웃 틀은 그대로 두고 내부 컴포넌트만 블라인드 처리
+            document.getElementById('matrix-grid').classList.add('question-phase');
+            
+            const prompt = document.getElementById('message-prompt');
+            document.getElementById('display-area').innerHTML = ''; 
+
+            prompt.style.color = "#fbbf24"; 
+            prompt.innerText = "READY";
+            playTone('ready'); 
+
+            setTimeout(() => {
+                if (totalTime <= 0) return; 
+                
+                prompt.style.color = "#4ade80"; 
+                prompt.innerText = "GO!!";
+                playTone('go'); 
+                
+                startCountdown(); 
+
+                setTimeout(() => {
+                    nextRound(true); 
+                }, 1000); 
+            }, 1000);
         }
 
         function startCountdown() {
@@ -505,81 +657,114 @@
             document.getElementById('timer').innerText = `${min}:${sec}`;
         }
 
-        function initSlotBoxes() {
-            const slotsDiv = document.getElementById('slots');
-            slotsDiv.innerHTML = '';
+        function buildInputBadges() {
+            const previewRow = document.getElementById('input-preview-row');
+            previewRow.innerHTML = '';
             for (let i = 0; i < planetCount; i++) {
-                const box = document.createElement('div');
-                box.className = 'slot-box'; box.id = `slot-box-${i}`;
-                slotsDiv.appendChild(box);
+                const badge = document.createElement('div');
+                badge.className = 'preview-badge'; badge.id = `preview-badge-${i}`;
+                badge.innerText = '';
+                previewRow.appendChild(badge);
             }
         }
 
-        function renderShuffledMatrix() {
+        function shuffleArray(array) {
+            for (let i = array.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [array[i], array[j]] = [array[j], array[i]];
+            }
+            return array;
+        }
+
+        function renderGridMatrix() {
             const grid = document.getElementById('matrix-grid');
             grid.innerHTML = '';
+            
             let items = [1, 2, 3, 4, 5, 6, 7, 8, 9];
-            for (let i = items.length - 1; i > 0; i--) {
-                const j = Math.floor(Math.random() * (i + 1));
-                [items[i], items[j]] = [items[j], items[i]];
-            }
+            shuffleArray(items); 
+            
             items.forEach(id => {
                 const itemDiv = document.createElement('div');
                 itemDiv.id = `matrix-item-${id}`; itemDiv.className = 'matrix-item';
                 itemDiv.onclick = () => selectPlanet(id);
-                itemDiv.innerHTML = `<div class="planet p${id}"></div><div class="planet-blind-mask"></div>`;
+                
                 grid.appendChild(itemDiv);
+                itemDiv.innerHTML = `
+                    <div class="planet ${planetNames[id]}"></div>
+                    <div class="label-tag">${planetLabels[id]}</div>
+                `;
             });
         }
 
         function generateSequence(count) {
-            while (true) {
-                let seq = []; let counts = {};
-                for (let i = 1; i <= 9; i++) counts[i] = 0;
-                let failed = false;
-                for (let i = 0; i < count; i++) {
-                    let validPlanets = [];
-                    for (let p = 1; p <= 9; p++) {
-                        if (counts[p] < 2 && (i === 0 || seq[i - 1] !== p)) validPlanets.push(p);
-                    }
-                    if (validPlanets.length === 0) { failed = true; break; }
-                    let selected = validPlanets[Math.floor(Math.random() * validPlanets.length)];
-                    seq.push(selected); counts[selected]++;
-                }
-                if (!failed) return seq; 
+            let seq = [];
+            for (let i = 0; i < count; i++) {
+                let randId;
+                do {
+                    randId = Math.floor(Math.random() * 9) + 1;
+                } while (i > 0 && seq[i - 1] === randId);
+                seq.push(randId);
             }
+            return seq;
         }
 
-        function nextRound() {
+        function nextRound(isFirstRound = false) {
             if (totalTime <= 0) return;
             
             isDisplaying = true; isAnswering = false;
             userSequence = []; currentRoundScore = 0;
-            initSlotBoxes(); renderShuffledMatrix(); 
-            
-            const items = document.querySelectorAll('.matrix-item');
-            items.forEach(item => item.classList.add('disabled'));
 
-            document.getElementById('message-prompt').innerText = "행성의 순서를 기억하세요!";
+            if (!isFirstRound) {
+                buildInputBadges();
+            }
+            
+            // [요청 반영] 전체 판넬 구조(틀)는 고정하고, 클래스 제어로 버튼 내부 요소만 가려 레이아웃 시프트를 원천 방지합니다.
+            document.getElementById('matrix-grid').classList.add('question-phase');
+            
+            document.getElementById('skip-btn').disabled = true; 
+            
+            const prompt = document.getElementById('message-prompt');
+            prompt.style.color = "#38bdf8";
+            prompt.innerText = "Watch the sequence!";
+            
             targetSequence = generateSequence(planetCount);
 
-            let step = 0;
             const displayArea = document.getElementById('display-area');
             displayArea.innerHTML = ''; 
 
-            clearInterval(displayInterval); 
-            displayInterval = setInterval(() => {
+            let step = 0;
+            clearTimeout(displayTimeoutRef);
+
+            function flashPlanet() {
                 if (step < targetSequence.length) {
                     const planetId = targetSequence[step];
-                    displayArea.innerHTML = `<div class="planet p${planetId}"></div>`;
-                    playTone('appear'); step++;
+                    const randomOffset = Math.floor(Math.random() * 161) - 80;
+                    
+                    displayArea.innerHTML = `<div class="planet ${planetNames[planetId]}" style="transform: translateX(${randomOffset}px) scale(1.1)"></div>`;
+                    playTone('appear');
+                    step++;
+
+                    displayTimeoutRef = setTimeout(() => {
+                        displayArea.innerHTML = ''; 
+                        displayTimeoutRef = setTimeout(flashPlanet, 250); 
+                    }, 850);
                 } else {
-                    clearInterval(displayInterval);
-                    displayArea.innerHTML = ''; isDisplaying = false; isAnswering = true;
+                    isDisplaying = false; isAnswering = true;
+                    
+                    // 문제가 모두 종료된 후 위치를 무작위로 섞어 렌더링하고 차단막 클래스를 제거합니다.
+                    renderGridMatrix();
+                    document.getElementById('matrix-grid').classList.remove('question-phase');
+                    
+                    const items = document.querySelectorAll('.matrix-item');
                     items.forEach(item => item.classList.remove('disabled'));
-                    document.getElementById('message-prompt').innerText = "보았던 행성을 순서대로 선택하세요!";
+                    
+                    document.getElementById('skip-btn').disabled = false;
+                    prompt.style.color = "#4ade80";
+                    prompt.innerText = "Select in the correct order!";
                 }
-            }, 1000);
+            }
+
+            flashPlanet();
         }
 
         function selectPlanet(id) {
@@ -589,50 +774,88 @@
             userSequence.push(id);
             const correctId = targetSequence[currentIdx];
 
-            const targetBox = document.getElementById(`slot-box-${currentIdx}`);
-            if(!targetBox) return;
+            const badge = document.getElementById(`preview-badge-${currentIdx}`);
             
-            const slotItem = document.createElement('div');
-            slotItem.className = 'slot-item';
-            slotItem.innerHTML = `<div class="planet p${id}"></div>`;
-
             if (id !== correctId) {
-                slotItem.classList.add('wrong-mark');
-                playTone('wrong'); triggerHaptic('wrong');
+                if (badge) {
+                    badge.classList.add('wrong-badge');
+                    badge.innerHTML = `<div class="planet ${planetNames[id]}"></div>`;
+                }
+                playTone('wrong'); 
+                triggerHaptic('wrong'); 
             } else {
                 score++; currentRoundScore++;
                 document.getElementById('score').innerText = score;
-                playTone('click'); triggerHaptic('click');
+                if (badge) {
+                    badge.classList.add('filled');
+                    badge.innerHTML = `<div class="planet ${planetNames[id]}"></div>`;
+                }
+                playTone('click'); 
+                triggerHaptic('click'); 
             }
             
-            targetBox.appendChild(slotItem);
+            checkSequenceCompletion();
+        }
 
+        function skipRound() {
+            if (!isAnswering) return;
+            isAnswering = false;
+            document.getElementById('skip-btn').disabled = true;
+
+            const items = document.querySelectorAll('.matrix-item');
+            items.forEach(item => item.classList.add('disabled'));
+
+            document.getElementById('message-prompt').style.color = "#f87171";
+            document.getElementById('message-prompt').innerText = "Round Skipped";
+            playTone('wrong');
+
+            for (let i = 0; i < planetCount; i++) {
+                const correctId = targetSequence[i];
+                const badge = document.getElementById(`preview-badge-${i}`);
+                if (badge) {
+                    badge.classList.remove('wrong-badge');
+                    badge.classList.add('filled');
+                    badge.innerHTML = `<div class="planet ${planetNames[correctId]}" style="opacity: 0.85;"></div>`;
+                }
+            }
+
+            setTimeout(() => { nextRound(); }, 1500);
+        }
+
+        function checkSequenceCompletion() {
             if (userSequence.length === planetCount) {
                 isAnswering = false;
+                document.getElementById('skip-btn').disabled = true;
+                
+                const items = document.querySelectorAll('.matrix-item');
+                items.forEach(item => item.classList.add('disabled')); 
+
                 const isAllCorrect = (currentRoundScore === planetCount);
                 if (isAllCorrect) {
                     score += planetCount; 
                     document.getElementById('score').innerText = score;
                     setTimeout(() => {
-                        document.getElementById('message-prompt').innerText = `퍼펙트 보너스! +${planetCount}점`;
-                        playTone('round_clear'); triggerHaptic('clear');
-                    }, 200);
+                        document.getElementById('message-prompt').style.color = "#fbbf24";
+                        document.getElementById('message-prompt').innerText = `PERFECT BONUS! +${planetCount}`;
+                        playTone('round_clear'); 
+                        triggerHaptic('clear'); 
+                    }, 150);
                 }
 
                 if (score > highScore) {
                     highScore = score;
                     document.getElementById('game-high-score').innerText = highScore;
                 }
-                setTimeout(() => { nextRound(); }, 1500); 
+                setTimeout(() => { nextRound(); }, 1400); 
             }
         }
 
         function endGame() {
-            clearInterval(gameTimer); clearInterval(displayInterval);
+            clearInterval(gameTimer); clearTimeout(displayTimeoutRef);
             isAnswering = false; isDisplaying = false;
             
             if (score > highScore) highScore = score;
-            localStorage.setItem(`pm_highScore_${totalTimeSetting}min`, highScore);
+            localStorage.setItem(`pm_highScore_v7_${totalTimeSetting}min`, highScore);
 
             playTone('game_over'); 
             document.getElementById('final-score').innerText = score;
